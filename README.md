@@ -91,16 +91,10 @@ APKs are written to `build/app/outputs/flutter-apk/`. For details, see:
 
 **Modifications in this fork (November 2026):**
 
-- New app name and Android application ID (`com.rananjaya.RCBFlow`).
-- RCBFlow logo, launcher icon and home screen title.
-- App version shown on the home screen.
-- The star button links to this repository.
-- Donation links to the original author's Ko-fi and Liberapay pages removed from
-  the app, and the upstream `FUNDING.yml` removed from this repository.
-- Store listing metadata updated with RCBFlow text, icon and screenshots.
-- Local builds no longer need the upstream signing secrets.
-- An automated test suite, a CI workflow, and tests before release builds.
-- Project documentation.
+- Independent RCBFlow branding and Android application identity.
+- Updated app interface and repository links.
+- Improved build, testing and CI workflows.
+- Added project documentation.
 
 ## License
 
