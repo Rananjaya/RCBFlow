@@ -34,6 +34,10 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
+      # A failing test fails the job here, before any signing or release step.
+      - name: Run Tests
+        run: flutter test
+
       - name: Setup Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks

@@ -42,6 +42,31 @@ but not independently confirmed).
   user's own backup or in a device-to-device transfer. RCBFlow doesn't send them
   anywhere itself.
 
+### Android backup: implications
+
+These come from Android's documentation and weren't tested on a device:
+
+- **Where the data goes:**
+  - Auto Backup uploads app files to the **user's own** Google account storage,
+    only if the user has turned on device backup.
+  - On recent Android versions the backup is end-to-end encrypted when the device
+    has a screen lock.
+  - Device-to-device transfer copies the files when the user sets up a new phone.
+- **What would be included:** only game progress and the three settings. No
+  personal information. The developer never receives it.
+- **Benefit:** progress survives a phone change or reinstall.
+- **Cost:** a copy of the game data exists outside the device, under the user's
+  Google account.
+
+**Recommendation (not applied):** keep backup enabled. The data isn't sensitive,
+the user controls backup at the system level, and it never reaches the
+developer.
+
+If you'd rather keep everything strictly on the device, set
+`android:allowBackup="false"` in `android/app/src/main/AndroidManifest.xml`.
+Android 12 and later may also need `android:dataExtractionRules` to exclude
+device-to-device transfer. This is the maintainer's decision.
+
 ## Network behaviour
 
 ### Requests the app makes
@@ -161,8 +186,9 @@ Every new feature and pull request must follow these rules:
 
 ## Known gaps
 
-- Android Auto Backup is left at its default (described above). If backups
-  should be excluded, a maintainer has to decide that and change the manifest.
+- Android Auto Backup is left at its default. The implications and the
+  recommendation are under *Android backup: implications* above. It is the
+  maintainer's decision.
 - The release APK is currently signed with the Android debug key, which isn't a
   stable or trusted identity. See [RELEASE.md](RELEASE.md#release-signing).
 - The `url_launcher` in-app WebView activity ships in the APK even though it is

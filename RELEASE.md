@@ -175,9 +175,102 @@ correct key instead.
 | `package_info_plus` 10.2.2 | BSD-3-Clause | Verified |
 | `cupertino_icons` 1.0.9 | MIT | Verified |
 | Flutter engine/framework and transitive packages | Mostly BSD, MIT, Apache-2.0 | Flutter bundles their notices automatically (`assets/flutter_assets/NOTICES.Z` in the APK) |
-| `assets/audio/*.mp3` (3 sound effects, from upstream) | **Unknown** | **Needs manual review.** Upstream gives no source, author or licence for these files. |
-| `assets/branding/rcbflow_icon.png` and derived files (logo, launcher icons) | Provided by the RCBFlow maintainer | **Maintainer to confirm** they have the right to use and license this artwork, including the terms of any tool used to make it |
-| `fastlane/metadata/` text and images | From upstream | Store listing material; the description and screenshots still describe upstream Flow |
+| `assets/audio/*.mp3` (3 sound effects, from upstream) | **Unverified** | Kept by maintainer decision; investigate before public distribution. See [Sound effects](#sound-effects) |
+| `assets/branding/rcbflow_icon.png` and derived files (logo, launcher icons, store icon) | Generated with ChatGPT for RCBFlow | No exclusive-ownership or copyright claim is made; see [Logo](#logo) |
+| `fastlane/metadata/` text and images | Upstream text with RCBFlow edits; RCBFlow icon and screenshots | Only used for future store listings; see [Store metadata](#store-metadata) |
 
 All the dependency licences listed are compatible with distribution under
 GPL-3.0.
+
+### Sound effects
+
+**Files:**
+
+- `assets/audio/sound.mp3`: 0.10 s, the drag step.
+- `assets/audio/complete_connection.mp3`: 0.47 s, plays when a pipe connects.
+- `assets/audio/level_complete.mp3`: 1.2 s, plays when a level is solved.
+
+**Verified (2026-11-10):**
+
+- **No credit anywhere upstream.** No source, author or licence is given in the
+  upstream README, `AI-DECLARATION.md`, issues (none), pull requests (none) or
+  F-Droid listing. F-Droid lists the app as GPL-3.0-only, with no anti-features
+  and no audio credit.
+- **No usable history.** The files arrived in upstream's single commit, so Git
+  history can't show where they came from.
+- **No embedded metadata.** All three were encoded with FFmpeg (`Lavf62.12.103`
+  / `Lavc62.28`), and all other metadata (title, artist, copyright) is empty.
+
+**Not verified:**
+
+- whether the upstream author made these sounds, generated them, or took them
+  from a sound library;
+- what licence they are under.
+
+The project's GPL-3.0 licence only covers them if the author had the right to
+license them that way, and that can't be confirmed.
+
+**Decision (maintainer, 2026-11-10):** keep all three sounds unchanged for now.
+Their licences remain **unverified**.
+
+**Before any public distribution** (store listing or public release APKs),
+investigate them. Either:
+
+1. ask the upstream author where the sounds came from, for example in a GitHub
+   issue on `sidhant947/Flow`; or
+2. replace them with sounds that have a clear licence (for example CC0) and
+   record their source in this file.
+
+Removing them without replacements would silence the game, unless the playback
+code in `lib/data/services/sound_service.dart` is also removed.
+
+### Logo
+
+The RCBFlow logo was **generated using ChatGPT for this project**.
+
+**Verified:**
+
+- `assets/branding/rcbflow_icon.png` contains a C2PA "Content Credentials"
+  manifest. It records the image as **created by ChatGPT (OpenAI image
+  generation, `OpenAI Media Service API`)**, with digital source type
+  `trainedAlgorithmicMedia`. So the artwork was AI-generated, not drawn by hand.
+- Everything else is derived from that image by this project:
+  - `rcbflow_logo_transparent.png` comes from
+    `tool/branding/make_transparent_logo.py`, which only makes the black
+    background transparent;
+  - the launcher icons come from `flutter_launcher_icons`;
+  - the 512×512 store icon (`fastlane/.../images/icon.png`) is a resized copy of
+    the transparent logo.
+
+  No other external artwork is involved. The derived files keep only pixel
+  data, so they **don't carry** the C2PA metadata.
+
+**What this project doesn't claim:**
+
+- exclusive ownership of the logo;
+- copyright in the logo;
+- that GPL-3.0 (or any other licence) definitely applies to the logo.
+
+Use of the image is subject to OpenAI's terms that applied when it was
+generated. In some jurisdictions purely AI-generated images may not be protected
+by copyright at all. Get legal advice if the logo's status matters, for example
+before registering it or using it commercially.
+
+### Store metadata
+
+`fastlane/metadata/android/en-US/` is only read by store tooling, such as
+F-Droid when it builds from a repository. It doesn't affect the app.
+
+| File | Content |
+|---|---|
+| `title.txt` | `RCBFlow: Connect Dots Puzzle` |
+| `short_description.txt` | "Offline connect-the-dots colour puzzle. A fork of the Flow game." |
+| `full_description.txt` | Upstream description, plus a statement that RCBFlow is an independent fork of Flow by sidhant947 under GPL-3.0, with a source link |
+| `images/icon.png` | RCBFlow logo, 512×512 |
+| `images/phoneScreenshots/1–5.png` | Copies of `docs/screenshots/`: home, gameplay, levels, how to play, settings (540×1212) |
+
+The upstream description says "thousands of free stages". That holds: campaign
+levels are generated for any level number, and Next Level keeps going without
+limit.
+
+Nothing has been submitted to any store.
