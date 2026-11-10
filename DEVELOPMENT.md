@@ -51,7 +51,7 @@ tool/branding/make_transparent_logo.py   Regenerates the derived logo
 android/                        Android host project (Gradle Kotlin DSL)
 test/                           Automated tests (see TESTING.md)
 docs/screenshots/               README screenshots
-fastlane/metadata/              Store listing text and images (from upstream)
+fastlane/metadata/              Store listing text, icon and screenshots (not yet published)
 ```
 
 ## Architecture
@@ -191,15 +191,25 @@ flutter build apk --release --split-per-abi
 
 ## Continuous integration
 
-`.github/workflows/build.yml` and `test.yml` come from upstream and are only run
-manually (`workflow_dispatch`).
+**`.github/workflows/ci.yml` (RCBFlow).** Runs `flutter pub get`,
+`flutter analyze` and `flutter test`:
+
+- **When:** on pushes to `main` and `feature/**` branches, on pull requests, and
+  on demand.
+- **Toolchain:** Flutter is pinned to the verified version, 3.47.9.
+- **Scope:** it needs no secrets and builds no APKs.
+
+**`.github/workflows/build.yml` and `test.yml` (upstream).** These are only run
+manually (`workflow_dispatch`):
 
 - **What they do:** decode a keystore from repository secrets and build release
   APKs. `build.yml` also publishes a GitHub release.
-- **What they don't do:** they **don't run `flutter analyze` or `flutter test`**.
-  Without the `KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD` and `KEY_ALIAS`
-  secrets configured, they write an incomplete `key.properties`, and the release
-  build will fail.
+- **Tests:** `build.yml` runs `flutter test` before setting up the keystore. If
+  a test fails, the job stops, so no APK is built or released. `test.yml` runs
+  no tests; rely on `ci.yml` for that.
+- **Secrets:** without the `KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD`
+  and `KEY_ALIAS` secrets configured, they write an incomplete `key.properties`,
+  and the release build will fail.
 
 ## Troubleshooting
 

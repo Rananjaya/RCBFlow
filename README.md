@@ -85,6 +85,10 @@ APKs are written to `build/app/outputs/flutter-apk/`. For details, see:
   UI and sound effects come from that project, which remains the work of its
   author. Upstream AI-use declaration: [AI-DECLARATION.md](AI-DECLARATION.md).
 - **This fork:** [Rananjaya/RCBFlow](https://github.com/Rananjaya/RCBFlow).
+- **Logo:** generated using ChatGPT for this project. See
+  [RELEASE.md](RELEASE.md#logo).
+- **Sound effects:** inherited from upstream. Their licences haven't been
+  verified yet. See [RELEASE.md](RELEASE.md#sound-effects).
 
 **Modifications in this fork (November 2026):**
 
@@ -93,9 +97,11 @@ APKs are written to `build/app/outputs/flutter-apk/`. For details, see:
 - App version shown on the home screen.
 - The star button links to this repository.
 - Donation links to the original author's Ko-fi and Liberapay pages removed from
-  the app.
+  the app, and the upstream `FUNDING.yml` removed from this repository.
+- Store listing metadata updated with RCBFlow text, icon and screenshots.
 - Local builds no longer need the upstream signing secrets.
-- An automated test suite and project documentation added.
+- An automated test suite, a CI workflow, and tests before release builds.
+- Project documentation.
 
 ## License
 
