@@ -189,7 +189,9 @@ Every new feature and pull request must follow these rules:
 - Android Auto Backup is left at its default. The implications and the
   recommendation are under *Android backup: implications* above. It is the
   maintainer's decision.
-- The release APK is currently signed with the Android debug key, which isn't a
-  stable or trusted identity. See [RELEASE.md](RELEASE.md#release-signing).
+- Releases are signed with a permanent release key. The CI receives it only
+  through encrypted repository secrets, and the release workflow checks the
+  certificate fingerprint. See
+  [RELEASE.md](RELEASE.md#the-permanent-signing-keystore).
 - The `url_launcher` in-app WebView activity ships in the APK even though it is
   unused. It is harmless without `INTERNET`, but worth knowing about.

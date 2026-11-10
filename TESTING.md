@@ -17,10 +17,10 @@ flutter analyze                                # static analysis
 recorded on 2026-11-10 with Flutter 3.47.9 / Dart 3.13.7. The number will change
 as tests are added; it isn't a fixed target.
 
-> `.github/workflows/ci.yml` runs `flutter analyze` and `flutter test` on pushes
-> and pull requests (see
-> [DEVELOPMENT.md](DEVELOPMENT.md#continuous-integration)). It hasn't run on
-> GitHub yet, so run the tests locally before you push too.
+> In CI, **Analyze and test** (`.github/workflows/ci.yml`) runs on every pull
+> request into `main`. The release workflow runs the tests again before it
+> publishes anything. See [DEVELOPMENT.md](DEVELOPMENT.md#continuous-integration)
+> and [RELEASE.md](RELEASE.md).
 
 ## Layout
 
