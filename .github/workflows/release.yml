@@ -143,8 +143,10 @@ jobs:
           EXPECTED_VERSION_NAME: ${{ steps.version.outputs.version }}
           EXPECTED_VERSION_CODE: ${{ steps.version.outputs.build }}
         run: |
-          bash tool/ci/verify_apk.sh build/app/outputs/flutter-apk/app-release.apk \
-            "$APP_ID" "$RELEASE_CERT_SHA256"
+          # Release mode: exactly one valid signer, whose certificate SHA-256
+          # must equal RELEASE_CERT_SHA256.
+          bash tool/ci/verify_apk.sh --mode release \
+            build/app/outputs/flutter-apk/app-release.apk "$APP_ID" "$RELEASE_CERT_SHA256"
 
       - name: Prepare release assets
         id: assets

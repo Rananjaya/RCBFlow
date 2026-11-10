@@ -203,8 +203,10 @@ There are two workflows, with Flutter pinned to 3.47.9 in both:
 
 - `tool/ci/check_version.sh` validates `version:` in `pubspec.yaml` against
   the release tags.
-- `tool/ci/verify_apk.sh` checks an APK's package ID, permissions, signature and
-  certificate fingerprint.
+- `tool/ci/verify_apk.sh` checks an APK. `--mode structure` (PR builds) checks
+  the package ID, version and permissions. `--mode release` also requires
+  exactly one valid signer with the release certificate fingerprint. Its tests
+  are in `tool/ci/tests/verify_apk_test.sh`.
 
 Versioning rules, the signing secrets, branch protection and recovering from a
 failed release are covered in [RELEASE.md](RELEASE.md).

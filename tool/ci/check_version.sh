@@ -49,7 +49,9 @@ parse_pubspec_version() {
 
 # Compares two "MAJOR MINOR PATCH" triples; prints -1, 0 or 1.
 cmp_semver() {
-  local -a a=($1) b=($2)
+  local -a a b
+  read -r -a a <<< "$1"
+  read -r -a b <<< "$2"
   for i in 0 1 2; do
     if (( 10#${a[$i]} > 10#${b[$i]} )); then echo 1; return; fi
     if (( 10#${a[$i]} < 10#${b[$i]} )); then echo -1; return; fi
