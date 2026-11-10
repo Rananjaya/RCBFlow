@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flow/ui/core/theme/app_colors.dart';
 import 'package:flow/ui/core/widgets/flow_board_widget.dart';
 import 'package:flow/ui/core/widgets/tangible_button.dart';
 import 'package:flow/ui/features/game/view_models/game_view_model.dart';
 import 'package:flow/ui/providers.dart';
+import 'package:flow/data/services/app_haptics.dart';
 
 class GameView extends ConsumerStatefulWidget {
   const GameView({
@@ -324,7 +324,7 @@ class _GameViewState extends ConsumerState<GameView>
     return GestureDetector(
       onTap: enabled
           ? () {
-              HapticFeedback.selectionClick();
+              AppHaptics.selectionClick();
               onTap();
             }
           : null,
@@ -375,7 +375,7 @@ class _GameViewState extends ConsumerState<GameView>
     return GestureDetector(
       onTap: enabled
           ? () {
-              HapticFeedback.selectionClick();
+              AppHaptics.selectionClick();
               onTap();
             }
           : null,
@@ -442,7 +442,7 @@ class _GameViewState extends ConsumerState<GameView>
 
   Future<void> _onLevelComplete(GameViewModelState state) async {
     _shockwaveController.forward(from: 0.0);
-    HapticFeedback.heavyImpact();
+    AppHaptics.heavyImpact();
     await ref.read(gameViewModelProvider.notifier).completeLevel();
   }
 

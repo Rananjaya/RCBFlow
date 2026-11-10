@@ -69,11 +69,15 @@ class AppSettings {
   const AppSettings({
     this.isHintEnabled = false,
     this.isSoundEnabled = true,
+    this.isVibrationEnabled = true,
     this.themeMode = ThemeMode.system,
   });
 
   final bool isHintEnabled;
   final bool isSoundEnabled;
+
+  /// App Vibration setting: haptic feedback for all app interactions.
+  final bool isVibrationEnabled;
   final ThemeMode themeMode;
 
   AppThemePreset get theme {
@@ -94,11 +98,13 @@ class AppSettings {
   AppSettings copyWith({
     bool? isHintEnabled,
     bool? isSoundEnabled,
+    bool? isVibrationEnabled,
     ThemeMode? themeMode,
   }) {
     return AppSettings(
       isHintEnabled: isHintEnabled ?? this.isHintEnabled,
       isSoundEnabled: isSoundEnabled ?? this.isSoundEnabled,
+      isVibrationEnabled: isVibrationEnabled ?? this.isVibrationEnabled,
       themeMode: themeMode ?? this.themeMode,
     );
   }

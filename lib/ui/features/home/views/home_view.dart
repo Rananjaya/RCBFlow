@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flow/ui/core/theme/app_colors.dart';
@@ -9,6 +8,7 @@ import 'package:flow/ui/features/how_to_play/views/how_to_play_view.dart';
 import 'package:flow/ui/features/level_select/views/level_select_view.dart';
 import 'package:flow/ui/features/settings/views/settings_view.dart';
 import 'package:flow/ui/providers.dart';
+import 'package:flow/data/services/app_haptics.dart';
 
 /// Official RCBFlow logo shown on the home screen (transparent-background copy
 /// of assets/branding/rcbflow_icon.png).
@@ -54,7 +54,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
     return GestureDetector(
       key: key,
       onTap: () {
-        HapticFeedback.selectionClick();
+        AppHaptics.selectionClick();
         onTap();
       },
       child: Container(

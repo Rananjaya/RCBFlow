@@ -52,7 +52,7 @@ independently, and is not affiliated with or endorsed by the original author.
 - Undo, clear, restart, move counter and timer.
 - Optional hints that reveal one pipe from the solution.
 - Progress, best moves/times and unfinished boards saved locally.
-- Light, dark and system themes; sound effects toggle.
+- Light, dark and system themes; sound effects and vibration toggles.
 - Works offline. The release build requests no internet permission.
 
 ## Technology

@@ -13,6 +13,10 @@ class SettingsService {
     final box = Hive.box(_boxName);
     final isHintEnabled = box.get('hint_enabled', defaultValue: false) as bool;
     final isSoundEnabled = box.get('sound_enabled', defaultValue: true) as bool;
+    // Added in 1.1.0. Installs from before then have no key, so vibration
+    // stays on (their existing behaviour).
+    final isVibrationEnabled =
+        box.get('vibration_enabled', defaultValue: true) as bool;
     final themeModeStr = box.get('theme_mode') as String?;
     final ThemeMode themeMode;
     if (themeModeStr != null) {
@@ -33,6 +37,7 @@ class SettingsService {
     return AppSettings(
       isHintEnabled: isHintEnabled,
       isSoundEnabled: isSoundEnabled,
+      isVibrationEnabled: isVibrationEnabled,
       themeMode: themeMode,
     );
   }
@@ -41,6 +46,7 @@ class SettingsService {
     final box = Hive.box(_boxName);
     await box.put('hint_enabled', settings.isHintEnabled);
     await box.put('sound_enabled', settings.isSoundEnabled);
+    await box.put('vibration_enabled', settings.isVibrationEnabled);
     await box.put('theme_mode', settings.themeMode.name);
   }
 }

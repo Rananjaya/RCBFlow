@@ -13,7 +13,7 @@ flutter test --name "timer"                    # tests whose name matches
 flutter analyze                                # static analysis
 ```
 
-**Current baseline:** 95 tests passing, plus a clean `flutter analyze`. This was
+**Current baseline:** 115 tests passing, plus a clean `flutter analyze`. This was
 recorded on 2026-11-10 with Flutter 3.47.9 / Dart 3.13.7. The number will change
 as tests are added; it isn't a fixed target.
 
@@ -51,6 +51,9 @@ test/
 | `domain/user_progress_test.dart` | 5 | Best-result tracking, saved-game copying and clearing |
 | `data/progress_repository_test.dart` | 5 | Caching, level completion, board saving, reset, listener notifications |
 | `data/local_storage_test.dart` | 7 | Real Hive in a temp folder: settings and progress survive a simulated restart; legacy theme migration |
+| `data/vibration_setting_storage_test.dart` | 5 | App Vibration with real Hive: on by default, on for installs from before 1.1.0, off and on survive a restart, other settings and progress unchanged |
+| `data/app_haptics_test.dart` | 5 | `AppHaptics` sends every haptic type when enabled and nothing when disabled; no code in `lib/` calls `HapticFeedback` directly |
+| `ui/settings/vibration_setting_test.dart` | 10 | App Vibration row and default; toggling off and on (saved and applied immediately); UI and game haptics (drags, connections, backtracking, level completion) follow the setting; other settings and progress unchanged |
 
 ## Test doubles
 
@@ -60,6 +63,7 @@ These live in `test/helpers/test_doubles.dart`:
 |---|---|---|
 | `InMemoryHiveService` | `HiveService` | Stores progress in memory; counts saves |
 | `InMemorySettingsService` | `SettingsService` | Settings without Hive |
+| `HapticsRecorder` (`test/helpers/haptics_recorder.dart`) | Android haptics channel | Records every haptic that would reach the device |
 | `FakeSoundService` | `SoundService` | Records which sounds would play; no audio plugin |
 | `FakeLevelGenerator` | `LevelGenerator` | Returns a fixed 3×3 level (`threeByThreeLevel`) immediately, with no isolates |
 
