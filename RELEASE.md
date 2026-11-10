@@ -87,7 +87,7 @@ pushes to `feature/**` branches. It runs three jobs:
 |---|---|
 | **Analyze and test** | `flutter pub get`, `flutter analyze`, `flutter test` |
 | **Version check** | Runs `check_version.sh` against the tags (pull requests only) |
-| **Release build check** | Builds the release APK and checks the package ID and that there's no INTERNET permission |
+| **Release build check** | Builds the release APK (not release-signed, because PRs get no secrets) and checks it with `verify_apk.sh --mode structure`: package ID, version name and code, no INTERNET permission. Also runs the script's self-tests (`tool/ci/tests/verify_apk_test.sh`). |
 
 **Security:**
 
@@ -113,14 +113,15 @@ protection on, that means every merged pull request. It runs only in
 4. Decodes the keystore from secrets into the runner's temporary folder and
    writes `android/key.properties`.
 5. Builds the signed universal APK with `flutter build apk --release`.
-6. Runs `tool/ci/verify_apk.sh`:
+6. Runs `tool/ci/verify_apk.sh --mode release`:
    - the package is `com.rananjaya.RCBFlow`;
    - there's no INTERNET permission;
    - the versionName and versionCode match `pubspec.yaml`;
-   - the signature verifies;
-   - the certificate SHA-256 equals `RELEASE_CERT_SHA256` in the workflow.
+   - the signature verifies, with **exactly one** signer certificate;
+   - that certificate's SHA-256 equals `RELEASE_CERT_SHA256` in the workflow.
 
-   An APK signed with any other key, including the debug key, fails here.
+   An unsigned APK, or one signed with any other key (including the debug key),
+   fails here.
 7. Copies the APK to `RCBFlow-X.Y.Z-release.apk` and writes a `.sha256` file.
 8. Pushes tag `vX.Y.Z` on the merged commit. It never force-pushes, so an
    existing tag can't be moved.
@@ -271,14 +272,35 @@ erases their local progress.
 ## Verifying an APK
 
 ```bash
-bash tool/ci/verify_apk.sh path/to/app.apk com.rananjaya.RCBFlow \
+# A release APK: structure + exactly one signer + the RCBFlow certificate
+bash tool/ci/verify_apk.sh --mode release path/to/app.apk com.rananjaya.RCBFlow \
   5fb96f9450a5316648cdc4134883e1c2b6d3f008ca32ba2235cff343d3bb44a2
+
+# Any build, signature not checked: package ID, version, no INTERNET
+bash tool/ci/verify_apk.sh --mode structure path/to/app.apk com.rananjaya.RCBFlow
+
 shasum -a 256 -c RCBFlow-X.Y.Z-release.apk.sha256   # for a downloaded release
 ```
 
-The script checks the package ID, that there's no INTERNET permission, the
-signature, and the certificate fingerprint. It uses the newest Android
-build-tools under `$ANDROID_HOME`.
+The script uses the newest Android build-tools under `$ANDROID_HOME`. In
+release mode it:
+
+1. runs `apksigner verify`, which must succeed;
+2. reads the signer certificates as PEM (`apksigner verify --print-certs-pem`)
+   and computes each SHA-256 with `openssl`.
+
+The check therefore doesn't depend on the wording of `apksigner`'s text output,
+which differs between build-tools versions. That difference is what broke the
+first release attempt. Text parsing is only a fallback for an `apksigner`
+without PEM output. If the check fails, the script prints `apksigner`'s output
+(public certificate information only) to make diagnosis easy.
+
+To test the script itself:
+
+```bash
+bash tool/ci/tests/verify_apk_test.sh build/app/outputs/flutter-apk/app-release.apk \
+  [build/app/outputs/flutter-apk/app-debug.apk]   # optional: checks the INTERNET rejection
+```
 
 ## Installation and upgrade testing
 

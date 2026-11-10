@@ -88,10 +88,22 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      # No android/key.properties here, so Gradle falls back to the debug key.
-      # This only proves the release build compiles; the APK isn't uploaded.
-      - name: Build release APK (unsigned validation build)
+      # No signing secrets here: there is no android/key.properties, so Gradle
+      # signs with a throwaway debug key. This proves the release build compiles;
+      # the APK is never uploaded or published.
+      - name: Build release APK (validation build, not release-signed)
         run: flutter build apk --release
 
-      - name: Verify package and permissions
-        run: bash tool/ci/verify_apk.sh build/app/outputs/flutter-apk/app-release.apk "$APP_ID"
+      # Structure mode: package ID, version name/code and no INTERNET
+      # permission. Signatures are deliberately not checked here; the release
+      # workflow checks them in release mode.
+      - name: Verify APK structure (package, version, permissions)
+        run: |
+          raw="$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | tr -d "[:space:]\"'")"
+          export EXPECTED_VERSION_NAME="${raw%%+*}" EXPECTED_VERSION_CODE="${raw##*+}"
+          bash tool/ci/verify_apk.sh --mode structure \
+            build/app/outputs/flutter-apk/app-release.apk "$APP_ID"
+
+      # Self-tests for verify_apk.sh, using throwaway keys generated in the test.
+      - name: Test APK verification script
+        run: bash tool/ci/tests/verify_apk_test.sh build/app/outputs/flutter-apk/app-release.apk
