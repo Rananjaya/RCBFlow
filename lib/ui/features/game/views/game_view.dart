@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flow/ui/core/theme/app_colors.dart';
 import 'package:flow/ui/core/widgets/flow_board_widget.dart';
 import 'package:flow/ui/core/widgets/tangible_button.dart';
@@ -493,32 +492,9 @@ class _GameViewState extends ConsumerState<GameView>
             borderColor: AppColors.border,
             onPressed: () => Navigator.pop(context),
           ),
-          const SizedBox(height: 8),
-          TangibleButton(
-            text: 'Buy me a Coffee',
-            isSecondary: true,
-            height: 42,
-            backgroundColor: AppColors.surface,
-            textColor: AppColors.headingDark,
-            borderColor: AppColors.border,
-            onPressed: _openKoFiUrl,
-          ),
         ],
       ),
     );
-  }
-
-  Future<void> _openKoFiUrl() async {
-    final Uri uri = Uri.parse('https://ko-fi.com/sidhant947');
-    try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        await launchUrl(uri, mode: LaunchMode.platformDefault);
-      }
-    } catch (_) {
-      try {
-        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-      } catch (_) {}
-    }
   }
 }
 

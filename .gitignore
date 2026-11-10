@@ -49,8 +49,17 @@ app.*.map.json
 
 # Linux 
 /linux/
-/test/
 
 # Environment & local secrets
 .env*
 !.env.example
+
+# Build outputs and reports outside /build
+/android/build/
+*.apk
+*.aab
+
+# Signing material anywhere in the repo (never commit)
+*.jks
+*.keystore
+key.properties
