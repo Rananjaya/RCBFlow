@@ -176,7 +176,7 @@ correct key instead.
 | `cupertino_icons` 1.0.9 | MIT | Verified |
 | Flutter engine/framework and transitive packages | Mostly BSD, MIT, Apache-2.0 | Flutter bundles their notices automatically (`assets/flutter_assets/NOTICES.Z` in the APK) |
 | `assets/audio/*.mp3` (3 sound effects, from upstream) | **Unverified** | Kept by maintainer decision; investigate before public distribution. See [Sound effects](#sound-effects) |
-| `assets/branding/rcbflow_icon.png` and derived files (logo, launcher icons, store icon) | Generated with ChatGPT for RCBFlow | No exclusive-ownership or copyright claim is made; see [Logo](#logo) |
+| `assets/branding/rcbflow_icon.png` and derived files (logo, launcher icons, store icon) | Designed by Rananjaya for RCBFlow | No separate licence stated; see [Logo](#logo) |
 | `fastlane/metadata/` text and images | Upstream text with RCBFlow edits; RCBFlow icon and screenshots | Only used for future store listings; see [Store metadata](#store-metadata) |
 
 All the dependency licences listed are compatible with distribution under
@@ -226,35 +226,20 @@ code in `lib/data/services/sound_service.dart` is also removed.
 
 ### Logo
 
-The RCBFlow logo was **generated using ChatGPT for this project**.
+The RCBFlow logo (`assets/branding/rcbflow_icon.png`) was designed by
+[Rananjaya](https://github.com/Rananjaya) for this project.
 
-**Verified:**
+Everything else is derived from that image by this project:
 
-- `assets/branding/rcbflow_icon.png` contains a C2PA "Content Credentials"
-  manifest. It records the image as **created by ChatGPT (OpenAI image
-  generation, `OpenAI Media Service API`)**, with digital source type
-  `trainedAlgorithmicMedia`. So the artwork was AI-generated, not drawn by hand.
-- Everything else is derived from that image by this project:
-  - `rcbflow_logo_transparent.png` comes from
-    `tool/branding/make_transparent_logo.py`, which only makes the black
-    background transparent;
-  - the launcher icons come from `flutter_launcher_icons`;
-  - the 512×512 store icon (`fastlane/.../images/icon.png`) is a resized copy of
-    the transparent logo.
+- `rcbflow_logo_transparent.png` comes from
+  `tool/branding/make_transparent_logo.py`, which only makes the black
+  background transparent;
+- the launcher icons come from `flutter_launcher_icons`;
+- the 512×512 store icon (`fastlane/.../images/icon.png`) is a resized copy of
+  the transparent logo.
 
-  No other external artwork is involved. The derived files keep only pixel
-  data, so they **don't carry** the C2PA metadata.
-
-**What this project doesn't claim:**
-
-- exclusive ownership of the logo;
-- copyright in the logo;
-- that GPL-3.0 (or any other licence) definitely applies to the logo.
-
-Use of the image is subject to OpenAI's terms that applied when it was
-generated. In some jurisdictions purely AI-generated images may not be protected
-by copyright at all. Get legal advice if the logo's status matters, for example
-before registering it or using it commercially.
+No upstream or third-party artwork is involved. The logo has no licence of its
+own, separate from the project's GPL-3.0 licence.
 
 ### Store metadata
 

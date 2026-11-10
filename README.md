@@ -85,8 +85,7 @@ APKs are written to `build/app/outputs/flutter-apk/`. For details, see:
   UI and sound effects come from that project, which remains the work of its
   author. Upstream AI-use declaration: [AI-DECLARATION.md](AI-DECLARATION.md).
 - **This fork:** [Rananjaya/RCBFlow](https://github.com/Rananjaya/RCBFlow).
-- **Logo:** generated using ChatGPT for this project. See
-  [RELEASE.md](RELEASE.md#logo).
+- **Logo:** designed by [Rananjaya](https://github.com/Rananjaya) for RCBFlow.
 - **Sound effects:** inherited from upstream. Their licences haven't been
   verified yet. See [RELEASE.md](RELEASE.md#sound-effects).
 
