@@ -27,7 +27,7 @@ but not independently confirmed).
 | Current level, highest level completed, total moves | Hive box `flow_user_progress` in the app's private documents directory | No, apart from OS backup (below) |
 | Best moves and best time per level | Same box | No, apart from OS backup |
 | Unfinished board (paths, moves, elapsed time) | Same box | No, apart from OS backup |
-| Settings: hints, sound, theme mode | Hive box `flow_settings` | No, apart from OS backup |
+| Settings: hints, sound, vibration, theme mode | Hive box `flow_settings` | No, apart from OS backup |
 
 - **Verified:** the app doesn't collect names, accounts, contacts, location,
   device identifiers or any free text. Nothing is stored outside the two boxes
@@ -52,7 +52,7 @@ These come from Android's documentation and weren't tested on a device:
   - On recent Android versions the backup is end-to-end encrypted when the device
     has a screen lock.
   - Device-to-device transfer copies the files when the user sets up a new phone.
-- **What would be included:** only game progress and the three settings. No
+- **What would be included:** only game progress and the four settings. No
   personal information. The developer never receives it.
 - **Benefit:** progress survives a phone change or reinstall.
 - **Cost:** a copy of the game data exists outside the device, under the user's

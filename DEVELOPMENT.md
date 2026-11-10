@@ -132,10 +132,25 @@ directory (`Hive.initFlutter()` uses `getApplicationDocumentsDirectory()`):
 | Box | Contents |
 |---|---|
 | `flow_user_progress` | One `UserProgress` record (key `progress`, adapter typeId 0): current/highest level, total moves, best moves/time per level, the saved unfinished board |
-| `flow_settings` | `hint_enabled`, `sound_enabled`, `theme_mode` (older installs: `app_theme`, migrated on read) |
+| `flow_settings` | `hint_enabled`, `sound_enabled`, `vibration_enabled` (added in 1.1.0; missing = on), `theme_mode` (older installs: `app_theme`, migrated on read) |
 
 The box names and keys still use the upstream `flow_` prefix. Changing them would
 silently reset players' progress.
+
+### Haptics (vibration)
+
+All vibration goes through `AppHaptics` (`lib/data/services/app_haptics.dart`).
+Its methods are `selectionClick`, `lightImpact`, `mediumImpact`, `heavyImpact`
+and `vibrate`.
+
+- **The setting:** `AppHaptics.enabled` mirrors the **App Vibration** setting.
+  It is set at start-up in `main.dart` and updated by `SettingsViewModel`, so a
+  change applies immediately.
+- **When it's off:** nothing is sent to Android. Android's own system and
+  accessibility vibration is unaffected.
+- **For new features:** use `AppHaptics`, never `HapticFeedback` directly.
+  `test/data/app_haptics_test.dart` scans `lib/` and fails on any direct call,
+  so a new feature can't bypass the setting by accident.
 
 ### Assets and branding
 

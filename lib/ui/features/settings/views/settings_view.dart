@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flow/ui/core/theme/app_colors.dart';
 import 'package:flow/ui/core/widgets/tangible_button.dart';
 import 'package:flow/ui/providers.dart';
+import 'package:flow/data/services/app_haptics.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -23,7 +23,7 @@ class SettingsView extends ConsumerWidget {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      HapticFeedback.lightImpact();
+                      AppHaptics.lightImpact();
                       Navigator.pop(context);
                     },
                     child: Container(
@@ -37,9 +37,7 @@ class SettingsView extends ConsumerWidget {
                           BoxShadow(
                             color: AppColors.currentTheme.isDark
                                 ? Colors.black.withValues(alpha: 0.35)
-                                : AppColors.headingDark.withValues(
-                                    alpha: 0.08,
-                                  ),
+                                : AppColors.headingDark.withValues(alpha: 0.08),
                             offset: const Offset(0, 3),
                             blurRadius: 4,
                           ),
@@ -141,6 +139,21 @@ class SettingsView extends ConsumerWidget {
 
                   _divider(),
 
+                  _gameToggle(
+                    key: const Key('settings_vibration_toggle'),
+                    label: 'App Vibration',
+                    description:
+                        'Enable or disable vibration and haptic feedback.',
+                    value: settings.isVibrationEnabled,
+                    onChanged: (val) {
+                      ref
+                          .read(settingsProvider.notifier)
+                          .toggleVibrationEnabled(val);
+                    },
+                  ),
+
+                  _divider(),
+
                   const SizedBox(height: 8),
                   TangibleButton(
                     text: 'Reset Progress',
@@ -171,7 +184,7 @@ class SettingsView extends ConsumerWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          HapticFeedback.selectionClick();
+          AppHaptics.selectionClick();
           onTap();
         },
         child: AnimatedContainer(
@@ -229,14 +242,17 @@ class SettingsView extends ConsumerWidget {
   }
 
   Widget _gameToggle({
+    Key? key,
     required String label,
+    String? description,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
     return GestureDetector(
+      key: key,
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        HapticFeedback.selectionClick();
+        AppHaptics.selectionClick();
         onChanged(!value);
       },
       child: Padding(
@@ -244,14 +260,29 @@ class SettingsView extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.headingDark,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.headingDark,
+                    ),
+                  ),
+                  if (description != null) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      description,
+                      style: TextStyle(fontSize: 12, color: AppColors.subtext),
+                    ),
+                  ],
+                ],
               ),
             ),
+            const SizedBox(width: 12),
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               width: 48,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flow/ui/core/theme/app_colors.dart';
+import 'package:flow/data/services/app_haptics.dart';
 
 class TangibleButton extends StatefulWidget {
   const TangibleButton({
@@ -55,7 +55,7 @@ class _TangibleButtonState extends State<TangibleButton> {
       onTapDown: (_) {
         if (isInteractive) {
           setState(() => _isPressed = true);
-          HapticFeedback.selectionClick();
+          AppHaptics.selectionClick();
         }
       },
       onTapUp: (_) {

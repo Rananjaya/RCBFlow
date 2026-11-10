@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flow/data/repositories/progress_repository.dart';
 import 'package:flow/data/services/settings_service.dart';
@@ -9,6 +8,7 @@ import 'package:flow/data/services/sound_service.dart';
 import 'package:flow/domain/models/game_level.dart';
 import 'package:flow/domain/use_cases/flow_rules.dart';
 import 'package:flow/domain/use_cases/level_generator.dart';
+import 'package:flow/data/services/app_haptics.dart';
 
 @immutable
 class GameViewModelState {
@@ -254,7 +254,7 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
 
     if (dotColor != null) {
       newPaths[dotColor] = [cell];
-      HapticFeedback.selectionClick();
+      AppHaptics.selectionClick();
       soundService?.playDragStep(1);
       state = state.copyWith(
         paths: newPaths,
@@ -271,7 +271,7 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
         final color = entry.key;
         final idx = path.indexOf(cell);
         newPaths[color] = path.sublist(0, idx + 1);
-        HapticFeedback.selectionClick();
+        AppHaptics.selectionClick();
         soundService?.playDragStep(newPaths[color]!.length);
         state = state.copyWith(
           paths: newPaths,
@@ -307,7 +307,7 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
     if (path.length >= 2 && targetCell == path[path.length - 2]) {
       path.removeLast();
       newPaths[activeColor] = path;
-      HapticFeedback.lightImpact();
+      AppHaptics.lightImpact();
       soundService?.playDragRetract(path.length);
       state = state.copyWith(paths: newPaths);
       return;
@@ -339,13 +339,13 @@ class GameViewModel extends StateNotifier<GameViewModelState> {
 
     path.add(targetCell);
     newPaths[activeColor] = path;
-    HapticFeedback.selectionClick();
+    AppHaptics.selectionClick();
 
     final endpoints = level.dots[activeColor];
     if (endpoints != null &&
         endpoints.length >= 2 &&
         (targetCell == endpoints[0] || targetCell == endpoints[1])) {
-      HapticFeedback.mediumImpact();
+      AppHaptics.mediumImpact();
       soundService?.playConnectionComplete();
       state = state.copyWith(
         paths: newPaths,

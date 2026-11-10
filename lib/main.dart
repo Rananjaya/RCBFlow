@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flow/data/services/app_haptics.dart';
 import 'package:flow/data/services/hive_service.dart';
 import 'package:flow/data/services/settings_service.dart';
 import 'package:flow/domain/models/app_settings.dart';
@@ -20,6 +21,7 @@ void main() async {
 
   final initialSettings = settingsService.getSettings();
   AppColors.currentTheme = initialSettings.theme;
+  AppHaptics.enabled = initialSettings.isVibrationEnabled;
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
