@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flow/data/repositories/progress_repository.dart';
 import 'package:flow/data/services/hive_service.dart';
 import 'package:flow/data/services/settings_service.dart';
 import 'package:flow/data/services/sound_service.dart';
 import 'package:flow/domain/models/app_settings.dart';
+import 'package:flow/domain/models/app_version.dart';
 import 'package:flow/domain/use_cases/level_generator.dart';
 import 'package:flow/ui/features/game/view_models/game_view_model.dart';
 import 'package:flow/ui/features/home/view_models/home_view_model.dart';
@@ -64,4 +66,11 @@ final settingsProvider = StateNotifierProvider<SettingsViewModel, AppSettings>((
 ) {
   final settingsService = ref.watch(settingsServiceProvider);
   return SettingsViewModel(settingsService: settingsService);
+});
+
+/// Version of the installed app, read from the platform (Android
+/// versionName/versionCode, which Gradle derives from pubspec.yaml).
+final appVersionProvider = FutureProvider<AppVersion>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return AppVersion(version: info.version, buildNumber: info.buildNumber);
 });

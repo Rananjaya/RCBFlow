@@ -10,6 +10,13 @@ import 'package:flow/ui/features/level_select/views/level_select_view.dart';
 import 'package:flow/ui/features/settings/views/settings_view.dart';
 import 'package:flow/ui/providers.dart';
 
+/// Official RCBFlow logo shown on the home screen (transparent-background copy
+/// of assets/branding/rcbflow_icon.png).
+const String homeLogoAsset = 'assets/branding/rcbflow_logo_transparent.png';
+
+/// Opened by the star button on the home screen.
+const String rcbflowRepositoryUrl = 'https://github.com/Rananjaya/RCBFlow';
+
 class HomeView extends ConsumerStatefulWidget {
   const HomeView({super.key});
 
@@ -18,6 +25,10 @@ class HomeView extends ConsumerStatefulWidget {
 }
 
 class _HomeViewState extends ConsumerState<HomeView> {
+  static const double _fixedContentHeight = 500;
+  static const double _minLogoSize = 56;
+  static const double _maxLogoSize = 168;
+
   @override
   void initState() {
     super.initState();
@@ -34,12 +45,14 @@ class _HomeViewState extends ConsumerState<HomeView> {
   }
 
   Widget _circleButton({
+    Key? key,
     required IconData icon,
     required VoidCallback onTap,
     double iconSize = 20,
     Color? iconColor,
   }) {
     return GestureDetector(
+      key: key,
       onTap: () {
         HapticFeedback.selectionClick();
         onTap();
@@ -78,134 +91,204 @@ class _HomeViewState extends ConsumerState<HomeView> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _circleButton(
-                    icon: Icons.star_rounded,
-                    iconColor: const Color(0xFFFF9800),
-                    onTap: () =>
-                        _launchUrl('https://github.com/sidhant947/Flow'),
-                  ),
-                  if (state.progress != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: AppColors.border, width: 1.0),
-                      ),
-                      child: Text(
-                        'Level ${state.progress!.currentLevel}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.headingDark,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // The logo takes most of the height left over after the fixed
+            // content (top bar, title, buttons, version: ~500 logical px), so
+            // the screen fits small phones without overflow. Scrolling is only
+            // a fallback for unusually short viewports (landscape, split
+            // screen, very large font scaling).
+            final logoSize =
+                ((constraints.maxHeight - _fixedContentHeight) * 0.6)
+                    .clamp(_minLogoSize, _maxLogoSize)
+                    .toDouble();
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _circleButton(
+                              icon: Icons.star_rounded,
+                              iconColor: const Color(0xFFFF9800),
+                              onTap: () => _launchUrl(rcbflowRepositoryUrl),
+                            ),
+                            if (state.progress != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: AppColors.border,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Level ${state.progress!.currentLevel}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.headingDark,
+                                  ),
+                                ),
+                              )
+                            else
+                              const SizedBox.shrink(),
+                            _circleButton(
+                              key: const Key('home_heart_button'),
+                              icon: Icons.favorite_rounded,
+                              iconColor: const Color(0xFFEF4444),
+                              // Decorative only: keeps the original look and
+                              // tap feedback but opens nothing.
+                              onTap: () {},
+                            ),
+                          ],
                         ),
-                      ),
-                    )
-                  else
-                    const SizedBox.shrink(),
-                  _circleButton(
-                    icon: Icons.favorite_rounded,
-                    iconColor: const Color(0xFFEF4444),
-                    onTap: _openKoFiUrl,
-                  ),
-                ],
-              ),
-              const Spacer(flex: 3),
-              Text(
-                'Flow',
-                style: TextStyle(
-                  fontSize: 52,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 6.0,
-                  color: AppColors.headingDark,
-                ),
-              ),
-              const Spacer(flex: 4),
-              TangibleButton(
-                text: 'Play',
-                onPressed: state.isLoading
-                    ? null
-                    : () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => GameView(
-                              levelNumber: state.progress?.currentLevel ?? 1,
+                        const Spacer(flex: 3),
+                        Image.asset(
+                          homeLogoAsset,
+                          key: const Key('home_logo'),
+                          width: logoSize,
+                          height: logoSize,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.medium,
+                          cacheWidth:
+                              (logoSize *
+                                      MediaQuery.devicePixelRatioOf(context))
+                                  .round(),
+                          semanticLabel: 'RCBFlow logo',
+                        ),
+                        const SizedBox(height: 12),
+                        // Original title style; only scales down if a very
+                        // narrow screen cannot fit it on one line.
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'RCBFlow',
+                            key: const Key('home_title'),
+                            maxLines: 1,
+                            softWrap: false,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 52,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 6.0,
+                              color: AppColors.headingDark,
                             ),
                           ),
-                        );
-                        ref.read(homeViewModelProvider.notifier).loadProgress();
-                      },
-              ),
-              const SizedBox(height: 16),
-              TangibleButton(
-                text: 'Levels',
-                isSecondary: true,
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LevelSelectView(),
+                        ),
+                        const Spacer(flex: 4),
+                        TangibleButton(
+                          text: 'Play',
+                          onPressed: state.isLoading
+                              ? null
+                              : () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => GameView(
+                                        levelNumber:
+                                            state.progress?.currentLevel ?? 1,
+                                      ),
+                                    ),
+                                  );
+                                  ref
+                                      .read(homeViewModelProvider.notifier)
+                                      .loadProgress();
+                                },
+                        ),
+                        const SizedBox(height: 16),
+                        TangibleButton(
+                          text: 'Levels',
+                          isSecondary: true,
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LevelSelectView(),
+                              ),
+                            );
+                            ref
+                                .read(homeViewModelProvider.notifier)
+                                .loadProgress();
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TangibleButton(
+                          text: 'Random',
+                          isSecondary: true,
+                          onPressed: () => _showDifficultyDialog(context),
+                        ),
+                        const SizedBox(height: 16),
+                        TangibleButton(
+                          text: 'How to Play',
+                          isSecondary: true,
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HowToPlayView(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TangibleButton(
+                          text: 'Settings',
+                          isSecondary: true,
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsView(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        _buildVersionLabel(),
+                        const Spacer(),
+                      ],
                     ),
-                  );
-                  ref.read(homeViewModelProvider.notifier).loadProgress();
-                },
-              ),
-              const SizedBox(height: 16),
-              TangibleButton(
-                text: 'Random',
-                isSecondary: true,
-                onPressed: () => _showDifficultyDialog(context),
-              ),
-              const SizedBox(height: 16),
-              TangibleButton(
-                text: 'How to Play',
-                isSecondary: true,
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HowToPlayView(),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              TangibleButton(
-                text: 'Settings',
-                isSecondary: true,
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsView()),
-                ),
-              ),
-              const Spacer(),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Future<void> _openKoFiUrl() async {
-    final Uri uri = Uri.parse('https://ko-fi.com/sidhant947');
-    try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        await launchUrl(uri, mode: LaunchMode.platformDefault);
-      }
-    } catch (_) {
-      try {
-        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-      } catch (_) {}
-    }
+  /// Subtle version line under Settings, e.g. "Version 1.0.0 (1)".
+  ///
+  /// The value comes from the platform (pubspec.yaml `version:` via Gradle),
+  /// never from a hardcoded string. Height is reserved while loading so the
+  /// layout does not shift.
+  Widget _buildVersionLabel() {
+    final version = ref.watch(appVersionProvider);
+    return SizedBox(
+      height: 16,
+      child: Text(
+        version.maybeWhen(data: (v) => v.label, orElse: () => ''),
+        key: const Key('home_version'),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.2,
+          color: AppColors.subtext,
+        ),
+      ),
+    );
   }
 
   void _showDifficultyDialog(BuildContext context) {

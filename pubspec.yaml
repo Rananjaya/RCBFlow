@@ -39,6 +39,7 @@ dependencies:
   hive_flutter: ^1.1.0
   url_launcher: ^6.3.3
   audioplayers: ^6.8.1
+  package_info_plus: ^10.2.2
 
 dev_dependencies:
   flutter_test:
@@ -50,6 +51,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  url_launcher_platform_interface: ^2.3.2
+  plugin_platform_interface: ^2.1.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -64,6 +68,9 @@ flutter:
 
   assets:
     - assets/audio/
+    # Transparent-background copy derived from the official logo
+    # (assets/branding/rcbflow_icon.png) by tool/branding/make_transparent_logo.py.
+    - assets/branding/rcbflow_logo_transparent.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -95,3 +102,17 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Launcher icon generation (dev-time only):
+#   dart run flutter_launcher_icons
+# Source: official logo with its black surround made transparent
+# (see tool/branding/make_transparent_logo.py). The 20% foreground inset keeps
+# the whole tile, including the "RCBFlow" wordmark, inside the adaptive-icon
+# safe zone so circular/squircle launcher masks do not clip it.
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: false
+  image_path: "assets/branding/rcbflow_logo_transparent.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/branding/rcbflow_logo_transparent.png"
+  adaptive_icon_foreground_inset: 20

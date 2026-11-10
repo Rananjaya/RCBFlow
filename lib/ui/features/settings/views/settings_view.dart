@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flow/ui/core/theme/app_colors.dart';
 import 'package:flow/ui/core/widgets/tangible_button.dart';
 import 'package:flow/ui/providers.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -143,16 +142,6 @@ class SettingsView extends ConsumerWidget {
                   _divider(),
 
                   const SizedBox(height: 8),
-                  TangibleButton(
-                    text: 'Become a Backer',
-                    height: 48,
-                    backgroundColor: AppColors.primary,
-                    textColor: AppColors.headingWhite,
-                    borderColor: AppColors.accent,
-                    onPressed: () =>
-                        _openUrl('https://liberapay.com/sidhant947/donate'),
-                  ),
-                  const SizedBox(height: 12),
                   TangibleButton(
                     text: 'Reset Progress',
                     isSecondary: true,
@@ -378,18 +367,5 @@ class SettingsView extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _openUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        await launchUrl(uri, mode: LaunchMode.platformDefault);
-      }
-    } catch (_) {
-      try {
-        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-      } catch (_) {}
-    }
   }
 }

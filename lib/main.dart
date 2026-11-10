@@ -44,14 +44,15 @@ class FlowApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     AppColors.currentTheme = settings.theme;
     return MaterialApp(
-      title: 'Flow',
+      title: 'RCBFlow',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: settings.themeMode,
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        AppColors.currentTheme =
-            isDark ? AppThemePreset.obsidian : AppThemePreset.pastelButter;
+        AppColors.currentTheme = isDark
+            ? AppThemePreset.obsidian
+            : AppThemePreset.pastelButter;
         return child!;
       },
       home: const HomeView(),
