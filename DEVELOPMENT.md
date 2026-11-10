@@ -48,6 +48,7 @@ assets/
   branding/rcbflow_icon.png     Official logo (source artwork, not bundled)
   branding/rcbflow_logo_transparent.png  Derived logo used in the app and launcher icon
 tool/branding/make_transparent_logo.py   Regenerates the derived logo
+tool/ci/                        CI helpers: version check, APK verification
 android/                        Android host project (Gradle Kotlin DSL)
 test/                           Automated tests (see TESTING.md)
 docs/screenshots/               README screenshots
@@ -191,25 +192,22 @@ flutter build apk --release --split-per-abi
 
 ## Continuous integration
 
-**`.github/workflows/ci.yml` (RCBFlow).** Runs `flutter pub get`,
-`flutter analyze` and `flutter test`:
+There are two workflows, with Flutter pinned to 3.47.9 in both:
 
-- **When:** on pushes to `main` and `feature/**` branches, on pull requests, and
-  on demand.
-- **Toolchain:** Flutter is pinned to the verified version, 3.47.9.
-- **Scope:** it needs no secrets and builds no APKs.
+| Workflow | Runs on | Does |
+|---|---|---|
+| `.github/workflows/ci.yml` | Pull requests into `main`, pushes to `feature/**`, manual runs | Three jobs: **Analyze and test**, **Version check** and **Release build check**. No secrets, nothing published. |
+| `.github/workflows/release.yml` | Pushes to `main` (merged pull requests) | Analyze, test, version check, signed build, APK verification, then tag `vX.Y.Z` and a GitHub Release with the APK and its SHA-256 |
 
-**`.github/workflows/build.yml` and `test.yml` (upstream).** These are only run
-manually (`workflow_dispatch`):
+**Helper scripts (they also work locally):**
 
-- **What they do:** decode a keystore from repository secrets and build release
-  APKs. `build.yml` also publishes a GitHub release.
-- **Tests:** `build.yml` runs `flutter test` before setting up the keystore. If
-  a test fails, the job stops, so no APK is built or released. `test.yml` runs
-  no tests; rely on `ci.yml` for that.
-- **Secrets:** without the `KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD`
-  and `KEY_ALIAS` secrets configured, they write an incomplete `key.properties`,
-  and the release build will fail.
+- `tool/ci/check_version.sh` validates `version:` in `pubspec.yaml` against
+  the release tags.
+- `tool/ci/verify_apk.sh` checks an APK's package ID, permissions, signature and
+  certificate fingerprint.
+
+Versioning rules, the signing secrets, branch protection and recovering from a
+failed release are covered in [RELEASE.md](RELEASE.md).
 
 ## Troubleshooting
 

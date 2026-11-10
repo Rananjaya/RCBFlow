@@ -1,122 +1,289 @@
 # Releasing RCBFlow
 
-How to version, build, sign, verify and publish an RCBFlow APK.
+How RCBFlow is versioned, validated, signed and published.
 
-> **Never commit or share signing secrets.** `android/key.properties`, `*.jks`
-> and `*.keystore` are already in `android/.gitignore`. Keep the keystore and its
-> passwords in a password manager, with an offline backup.
+> **Never commit or share signing secrets.** These are git-ignored and must
+> stay off GitHub: `android/key.properties`, `*.jks`, `*.keystore`, credential
+> notes and APKs. CI only receives signing material through encrypted
+> repository secrets.
+
+## How a release happens
+
+```text
+feature branch ──► pull request into main
+                     │  CI: Analyze and test · Version check · Release build check
+                     ▼  (all required to pass; see "Branch protection")
+                   merge
+                     │
+                     ▼  Release workflow (push to main)
+   analyze → test → version check → signed build → verify APK
+                     │  (any failure: nothing is published)
+                     ▼
+   tag vX.Y.Z  →  GitHub Release "RCBFlow X.Y.Z"
+                  ├─ RCBFlow-X.Y.Z-release.apk
+                  └─ RCBFlow-X.Y.Z-release.apk.sha256
+```
+
+Each merge into `main` publishes exactly one release, so **every pull request
+into `main` must raise the version**, even one that only changes documentation.
 
 ## Versioning
 
-The version is set in one place, `pubspec.yaml`:
+`pubspec.yaml` is the single source of truth:
 
 ```yaml
-version: 1.0.0+1   # <versionName>+<versionCode>
+version: 1.0.1+2   # MAJOR.MINOR.PATCH+BUILD
 ```
 
 | Part | Becomes | Rule |
 |---|---|---|
-| `1.0.0` | Android `versionName`, shown as "Version 1.0.0 (1)" on the home screen | Semantic version, chosen by the maintainer |
-| `+1` | Android `versionCode` | **Must increase on every release.** Android won't install an update with an equal or lower code. |
+| `1.0.1` | Android `versionName`, Git tag `v1.0.1`, release title "RCBFlow 1.0.1", APK name `RCBFlow-1.0.1-release.apk`; shown on the home screen as "Version 1.0.1 (2)" | [Semantic versioning](https://semver.org); must be higher than the latest release tag |
+| `+2` | Android `versionCode` | Must be higher than the build number of the latest release. Android won't install an update with an equal or lower code. |
 
-You can override both for a single build with
-`flutter build apk --build-name=1.1.0 --build-number=2`, but update
-`pubspec.yaml` too so the repository records the real version.
+### Choosing the version (your decision)
 
-**Split-ABI builds** (`--split-per-abi`, used by the upstream CI) multiply the
-code: each APK gets `versionCode * 10 + abi`, where armeabi-v7a=1, arm64-v8a=2
-and x86_64=3. The home screen then shows that number, for example "(12)".
+CI checks that the version went **up**. It doesn't decide *how much*; that's
+your call when you open the pull request.
 
-## Building
+| Bump | When | Example |
+|---|---|---|
+| **MAJOR** (`1.4.2` → `2.0.0`) | A breaking change for players or the project | Saved progress can't be read after updating; minimum Android version raised; gameplay rules changed incompatibly |
+| **MINOR** (`1.4.2` → `1.5.0`) | A backward-compatible feature | New game mode, new setting, new screen |
+| **PATCH** (`1.4.2` → `1.4.3`) | A backward-compatible fix or small change | Bug fix, layout fix, documentation or CI-only change |
+
+Always add 1 to the build number, whatever kind of bump it is. Reset MINOR and
+PATCH to 0 when you bump MAJOR, and reset PATCH when you bump MINOR.
+
+### Bumping the version
+
+1. On your feature branch, edit the `version:` line in `pubspec.yaml`, for
+   example `1.0.0+1` → `1.0.1+2`.
+2. Commit it with your other changes and open the pull request.
+3. **Version check** confirms the bump. To check locally first:
+
+   ```bash
+   git fetch --tags
+   bash tool/ci/check_version.sh
+   ```
+
+**What the check enforces** (`tool/ci/check_version.sh`):
+
+- **Format:** `MAJOR.MINOR.PATCH+BUILD`. No leading zeros, no pre-release
+  suffix (`-beta`), and a build number from 1 to 2,100,000,000.
+- **Higher version:** above the latest `vX.Y.Z` tag. Tags in other formats are
+  ignored.
+- **Higher build number:** above the build number in `pubspec.yaml` at that
+  tag.
+- **No duplicates:** the `vX.Y.Z` tag for this version mustn't exist yet.
+- **First release:** if there are no release tags at all, any valid version is
+  accepted. That will be `1.0.0+1`.
+
+## Pull request validation
+
+`.github/workflows/ci.yml` runs on every pull request into `main`, and on
+pushes to `feature/**` branches. It runs three jobs:
+
+| Check name | What it does |
+|---|---|
+| **Analyze and test** | `flutter pub get`, `flutter analyze`, `flutter test` |
+| **Version check** | Runs `check_version.sh` against the tags (pull requests only) |
+| **Release build check** | Builds the release APK and checks the package ID and that there's no INTERNET permission |
+
+**Security:**
+
+- It uses the plain `pull_request` trigger and has read-only permissions.
+- It has **no access to signing secrets**, so pull requests from forks can't
+  reach the keystore.
+- The release build check therefore uses the debug-key fallback. Its APK is
+  only a compile check and is never uploaded.
+- Flutter is pinned to the version the tests are verified with (`3.47.9`); see
+  `FLUTTER_VERSION` in the workflows.
+
+## Automatic releases
+
+`.github/workflows/release.yml` runs on every push to `main`. With branch
+protection on, that means every merged pull request. It runs only in
+`Rananjaya/RCBFlow` on `main`, never on forks or feature branches.
+
+1. Waits for any earlier release runs to finish, then checks out the exact
+   merged commit, with full history and tags.
+2. Runs `flutter analyze` and `flutter test` again.
+3. Runs `check_version.sh --mode release`, and stops if a GitHub Release for the
+   version already exists.
+4. Decodes the keystore from secrets into the runner's temporary folder and
+   writes `android/key.properties`.
+5. Builds the signed universal APK with `flutter build apk --release`.
+6. Runs `tool/ci/verify_apk.sh`:
+   - the package is `com.rananjaya.RCBFlow`;
+   - there's no INTERNET permission;
+   - the versionName and versionCode match `pubspec.yaml`;
+   - the signature verifies;
+   - the certificate SHA-256 equals `RELEASE_CERT_SHA256` in the workflow.
+
+   An APK signed with any other key, including the debug key, fails here.
+7. Copies the APK to `RCBFlow-X.Y.Z-release.apk` and writes a `.sha256` file.
+8. Pushes tag `vX.Y.Z` on the merged commit. It never force-pushes, so an
+   existing tag can't be moved.
+9. Publishes the GitHub Release "RCBFlow X.Y.Z" with the APK and checksum. The
+   notes are generated from the merged pull requests.
+10. Deletes the keystore and `key.properties` from the runner, even if an
+    earlier step failed.
+
+**Safety rules:**
+
+- **Permissions:** the workflow is read-only by default. Only the release job
+  gets `contents: write`, to push the tag and create the release, and
+  `actions: read`, to see earlier runs.
+- **Every merge gets its own release, in merge order:** the job's first step
+  waits until every earlier run of this workflow has finished (first in, first
+  out, by run number). If several pull requests are merged quickly, each one is
+  released in turn; none is skipped.
+- **Why there's no `concurrency:` group:** GitHub keeps only one pending run per
+  group and cancels older pending ones, which would skip versions. The wait
+  gives up after 75 minutes with an error; re-run the job once the earlier runs
+  finish.
+- **No conflicting tags:** tags are pushed without `--force`, so a tag can never
+  be overwritten, even if two runs somehow overlapped. The version check also
+  rejects a version whose tag already exists.
+- **Pinned actions:** only `actions/checkout`, `actions/setup-java` and
+  `subosito/flutter-action` are used, each pinned to a commit SHA. Releases are
+  published with the GitHub CLI that is preinstalled on the runner.
+
+## Signing secrets
+
+The release job needs four **repository secrets**. Set them under GitHub →
+*Settings* → *Secrets and variables* → *Actions* → *New repository secret*.
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | The keystore file, base64-encoded (see below) |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password, from your password manager |
+| `ANDROID_KEY_ALIAS` | `rcbflow-release` |
+| `ANDROID_KEY_PASSWORD` | The **same** value as the keystore password. The keystore is PKCS12, which uses one password for both. |
+
+**Encode the keystore without showing it on screen** (macOS):
+
+```bash
+base64 -i ~/.android/keystores/rcbflow-release.jks | pbcopy   # copies to clipboard
+# paste into the ANDROID_KEYSTORE_BASE64 secret, then clear the clipboard:
+pbcopy < /dev/null
+```
+
+**Passwords:** paste them directly from your password manager into the GitHub
+secret form. Don't put them in shell commands, files in the repository, issues
+or chat.
+
+GitHub hides secret values in logs, and the workflow never prints them. If a
+secret is missing, the release fails at *Set up release signing* and names the
+missing secret. Nothing is published.
+
+## Branch protection for `main`
+
+Adding workflow files **doesn't** protect `main` by itself. Set it up in GitHub
+under *Settings* → *Rules* → *Rulesets* → *New branch ruleset*, or the classic
+*Settings* → *Branches* → *Add branch protection rule*:
+
+- **Target:** `main` (default branch).
+- **Require a pull request before merging.**
+- **Require status checks to pass**, and select exactly:
+  - `Analyze and test`
+  - `Version check`
+  - `Release build check`
+- **Require branches to be up to date before merging** (recommended). This
+  re-runs Version check against the latest tags, so two pull requests can't
+  claim the same version.
+- **Block force pushes** and **restrict deletions**.
+- **Don't allow bypassing** the rules, or in classic rules, *Include
+  administrators*. Then nobody can push directly to `main`, you included.
+
+Status checks only appear in the picker after they have run at least once, so
+open a pull request first.
+
+If you later add **tag** rules, let GitHub Actions create `v*` tags, otherwise
+the release job can't push them.
+
+## Recovering from a failed release
+
+Open the failed run under *Actions* → *Release*.
+
+| Where it failed | What happened | What to do |
+|---|---|---|
+| Analyze, test, version check, build or APK verification | Nothing tagged or published | Fix it in a new pull request. The version wasn't released, so you can keep it. |
+| *Set up release signing* | Secrets missing or wrong; nothing published | Fix the secrets, then **Re-run jobs** on the same run |
+| *Publish GitHub Release*, with the tag already created | Tag exists, no release | **Re-run jobs.** The version check sees the tag on the same commit and resumes, skipping tag creation. |
+| A release exists but is incomplete (e.g. missing an asset) | Re-runs refuse to overwrite it | Delete the incomplete release (not the tag) on the *Releases* page, then **Re-run jobs** |
+| A bad build was released | — | Never reuse a version and never move a tag. Fix it, bump the version (e.g. PATCH) and merge. You can mark the bad release as a pre-release or delete it. |
+
+## Building locally
 
 ```bash
 flutter pub get
 flutter analyze
 flutter test
-flutter build apk --debug                    # build/app/outputs/flutter-apk/app-debug.apk
-flutter build apk --release                  # build/app/outputs/flutter-apk/app-release.apk
-flutter build apk --release --split-per-abi  # smaller per-architecture APKs
+flutter build apk --debug     # build/app/outputs/flutter-apk/app-debug.apk
+flutter build apk --release   # build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Debug APKs are large (~110 MB), unoptimised and include the `INTERNET`
-permission for development tools. Only distribute release APKs.
+- With `android/key.properties` present (git-ignored), local release builds are
+  signed with the release key. Without it, `android/app/build.gradle.kts` falls
+  back to the debug key. That's fine for testing, but never distribute such an
+  APK.
+- Debug APKs (~110 MB) include `INTERNET` for development tools. Only
+  distribute release APKs.
+- `--split-per-abi` builds multiply the versionCode (`versionCode * 10 + abi`).
+  Releases ship the universal APK only.
 
-## Release signing
+## The permanent signing keystore
 
 Android identifies an app by its **application ID plus its signing
-certificate**. An update installs only if it is signed with the same key as the
-app already on the device.
+certificate**. Updates only install if they are signed with the same key, so
+this key must stay the same for the life of the app.
 
-**Current state (verified 2026-11-10):** `android/key.properties` doesn't exist,
-so `android/app/build.gradle.kts` signs release builds with the **Android debug
-key** (`CN=Android Debug`). That keeps local builds working, but it is **not
-suitable for a permanent release**:
+| | |
+|---|---|
+| Keystore | `~/.android/keystores/rcbflow-release.jks` (PKCS12, outside the repo) |
+| Alias | `rcbflow-release` |
+| Certificate | `CN=Rananjaya, O=RCBFlow`, RSA 4096, SHA256withRSA, valid until 2054-03-28 |
+| SHA-256 | `5F:B9:6F:94:50:A5:31:66:48:CD:C4:13:48:83:E1:C2:B6:D3:F0:08:CA:32:BA:22:35:CF:F3:43:D3:BB:44:A2` |
+| Encrypted backup | `~/RCBFlow-Backups/rcbflow-release-keystore-backup.dmg` (AES-256, separate passphrase). Keep a copy on offline external storage. |
 
-- **It isn't stable.** The debug keystore is created per machine
-  (`~/.android/debug.keystore`). A build from another computer, or after that
-  file is deleted, is signed with a different key and **can't update** the
-  installed app.
-- **It isn't secret.** The debug keystore uses a well-known password, so anyone
-  can produce APKs with an equally "valid" debug signature.
-- **Changing keys later is costly.** Moving users from a debug-signed APK to a
-  release-signed one means **uninstalling first**, and that **erases their local
-  progress**. Pick a permanent key before sharing the app widely.
+**Keeping the keystore safe:**
 
-### Create a release keystore (once)
+- Keep the keystore password and the backup passphrase in a password manager.
+- Never upload the keystore to the repository, as an artifact or to public cloud
+  storage.
+- Test the backup occasionally: mount the DMG and run `keytool -list` on the
+  copy inside.
+- **If the keystore or its password is lost**, no further update can be
+  installed over existing installs. Users would have to uninstall, losing their
+  progress, and install a new app identity.
+- **If it may have leaked**, rotate the GitHub secrets immediately and get
+  advice before replacing the key. Android key rotation (APK Signature Scheme
+  v3.1) is possible but advanced.
+- The certificate fingerprint is also recorded in `release.yml`
+  (`RELEASE_CERT_SHA256`). Change it only if you deliberately rotate the key.
 
-```bash
-keytool -genkey -v \
-  -keystore ~/keys/rcbflow-release.jks \
-  -storetype JKS -keyalg RSA -keysize 4096 -validity 10000 \
-  -alias rcbflow
-```
-
-Store the keystore **outside the repository** and keep a backup. If you lose it,
-you can never publish another update under the same identity.
-
-### Configure `android/key.properties`
-
-Create `android/key.properties` (it is git-ignored). Use your own values; the
-ones below are placeholders:
-
-```properties
-storePassword=<your-store-password>
-keyPassword=<your-key-password>
-keyAlias=rcbflow
-storeFile=/absolute/path/to/rcbflow-release.jks
-```
-
-`storeFile` is resolved from `android/app/`, so either use an absolute path or a
-path relative to that folder. Once this file exists, release builds use the key
-automatically. If a field is missing, Gradle fails with
-`null cannot be cast to non-null type kotlin.String`.
-
-For GitHub Actions, the upstream workflows expect the secrets
-`KEYSTORE_BASE64`, `STORE_PASSWORD`, `KEY_PASSWORD` and `KEY_ALIAS`.
+Earlier test builds were signed with the Android debug key. Devices with those
+installs can't upgrade to a release-signed APK
+(`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). They need an uninstall first, which
+erases their local progress.
 
 ## Verifying an APK
 
-Use the newest version folder under `$ANDROID_HOME/build-tools/`:
-
 ```bash
-BT=$ANDROID_HOME/build-tools/36.0.0
-APK=build/app/outputs/flutter-apk/app-release.apk
-
-$BT/aapt2 dump badging $APK | grep -E "^package:|application-label:|uses-permission"
-# expect: package name='com.rananjaya.RCBFlow', label 'RCBFlow',
-#         and no android.permission.INTERNET
-
-$BT/apksigner verify --print-certs $APK
-# expect: your release certificate, not "CN=Android Debug"
+bash tool/ci/verify_apk.sh path/to/app.apk com.rananjaya.RCBFlow \
+  5fb96f9450a5316648cdc4134883e1c2b6d3f008ca32ba2235cff343d3bb44a2
+shasum -a 256 -c RCBFlow-X.Y.Z-release.apk.sha256   # for a downloaded release
 ```
 
-Write down the certificate's SHA-256 digest for each release. It must stay the
-same across releases.
+The script checks the package ID, that there's no INTERNET permission, the
+signature, and the certificate fingerprint. It uses the newest Android
+build-tools under `$ANDROID_HOME`.
 
 ## Installation and upgrade testing
 
 ```bash
-adb install -r build/app/outputs/flutter-apk/app-release.apk   # upgrade in place
+adb install -r RCBFlow-X.Y.Z-release.apk   # upgrade in place
 adb shell dumpsys package com.rananjaya.RCBFlow | grep -E "versionName|versionCode"
 ```
 
@@ -128,20 +295,22 @@ adb shell dumpsys package com.rananjaya.RCBFlow | grep -E "versionName|versionCo
    under Settings on the home screen.
 4. Check the log for crashes: `adb logcat | grep -E "FATAL EXCEPTION|E/flutter"`.
 
-`INSTALL_FAILED_UPDATE_INCOMPATIBLE` means the signing key changed. Don't fix it
-by uninstalling on users' devices; that erases their data. Rebuild with the
-correct key instead.
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` means the signing key differs. Don't fix
+it by uninstalling on players' devices; that erases their data.
 
 ## Release checklist
 
-- [ ] `version:` bumped in `pubspec.yaml` (code higher than the last release)
-- [ ] `flutter analyze` clean and `flutter test` passing
-- [ ] Release APK built with the **release keystore**; `apksigner` shows the expected certificate
-- [ ] Application ID is `com.rananjaya.RCBFlow` and the label is `RCBFlow`
-- [ ] Permissions unchanged from the last release (or changes documented in [PRIVACY_AND_SECURITY.md](PRIVACY_AND_SECURITY.md))
-- [ ] Upgrade over the previous release keeps progress and settings
-- [ ] Smoke test on a device or emulator: home, a level, levels list, settings, how to play
-- [ ] Release notes written; source for this exact version pushed and tagged (GPL-3.0 requires the source to be available)
+Most checks are automated. Before you merge a pull request, confirm:
+
+- [ ] `version:` in `pubspec.yaml` is bumped by the right amount (MAJOR / MINOR / PATCH) and the build number went up by 1
+- [ ] All three CI checks are green
+- [ ] Any new permission or network use is documented in [PRIVACY_AND_SECURITY.md](PRIVACY_AND_SECURITY.md)
+
+After the release workflow finishes:
+
+- [ ] The *Releases* page shows "RCBFlow X.Y.Z" with the APK and `.sha256`
+- [ ] Upgrade test over the previous release keeps progress (see above)
+- [ ] Smoke test: home, a level, levels list, settings, how to play
 
 ## Licensing and third-party components
 
